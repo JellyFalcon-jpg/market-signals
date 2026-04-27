@@ -4,6 +4,7 @@ import os
 
 from telegram import Update
 from telegram.ext import Application, CommandHandler, ContextTypes, MessageHandler, filters
+from telegram.error import Conflict
 
 from config_loader import load_config
 from signals.query import format_signal_reply, signal_for_query
@@ -28,6 +29,14 @@ async def signal_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
 
 async def text_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     await reply_with_signal(update, update.message.text.strip())
+
+
+async def error_handler(update: object, context: ContextTypes.DEFAULT_TYPE) -> None:
+    error = context.error
+    if isinstance(error, Conflict):
+        print("Telegram polling conflict: another bot instance is already running for this token.")
+        return
+    print(f"Telegram bot error: {error}")
 
 
 async def reply_with_signal(update: Update, query: str) -> None:
@@ -65,6 +74,7 @@ def main() -> None:
     app.add_handler(CommandHandler("ping", ping))
     app.add_handler(CommandHandler("signal", signal_command))
     app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, text_message))
+    app.add_error_handler(error_handler)
     print("Telegram signal bot is running. Open Telegram and send /ping or /signal AAPL.")
     app.run_polling()
 
