@@ -1,0 +1,78 @@
+watchlist:
+  - AAPL
+  - TSLA
+  - MSFT
+  - NVDA
+  - SPY
+
+data:
+  source: yfinance
+  storage: parquet
+  store_dir: data/store/ohlcv
+  start_date: "2018-01-01"
+  interval: 1d
+  auto_adjust: false
+
+features:
+  sma_windows: [20, 50, 200]
+  ema_windows: [12, 26]
+  macd:
+    fast: 12
+    slow: 26
+    signal: 9
+  rsi_window: 14
+  bollinger:
+    window: 20
+    std_dev: 2
+  atr_window: 14
+  stochastic:
+    window: 14
+    smooth_window: 3
+  volatility_window: 20
+
+signals:
+  thresholds:
+    buy: 0.3
+    sell: -0.3
+  ensemble_weights:
+    technical: 0.6
+    ml: 0.4
+  technical_weights:
+    sma_trend: 1.0
+    sma_cross: 1.0
+    macd: 1.0
+    rsi: 0.8
+    bollinger: 0.8
+    golden_death_cross: 1.2
+  rsi:
+    oversold: 30
+    overbought: 70
+  ml_missing_score: 0.0
+
+ml:
+  horizon_days: 1
+  model_type: random_forest
+  model_dir: models
+  test_size: 0.2
+  random_state: 42
+  random_forest:
+    n_estimators: 300
+    max_depth: 8
+    min_samples_leaf: 5
+
+backtest:
+  initial_cash: 10000
+  benchmark: SPY
+  trading_cost_bps: 5
+
+output:
+  signal_log_csv: output/logs/signals.csv
+  signal_log_jsonl: output/logs/signals.jsonl
+  reports_dir: output/reports
+  disclaimer: "For informational and educational purposes only. Signals are decision-support inputs, not financial advice. Past performance does not guarantee future results."
+
+notifications:
+  telegram:
+    enabled: true
+    bot_token_env: TELEGRAM_BOT_TOKEN
+    chat_id_env: TELEGRAM_CHAT_ID
